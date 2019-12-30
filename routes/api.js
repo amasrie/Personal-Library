@@ -106,7 +106,7 @@ module.exports = function (app) {
               //find the book's comments
               commentModel.find({book: bookid}, {"_id": 0, "book": 0}, (error, matches) => {
                 if(matches && matches.length > 0){
-                  matches.forEach(elemen => {
+                  matches.forEach(element => {
                     book.comments.push(element);
                   })
                 }
@@ -121,9 +121,28 @@ module.exports = function (app) {
     })
     
     .post((req, res) => {
-      var bookid = req.params.id;
-      var comment = req.body.comment;
-      //json res format same as .get
+      let bookid = req.params.id;
+      let comment = req.body.comment;
+      //create comment
+      let newComment = new commentModel({
+        book: bookid,
+        comment: comment
+      });
+      newComment.save((err, data) => {
+          if(err){
+            res.status(500).send({error:"An error occured while trying to create a new comment"});
+          }else{
+            //udpate counter of comments of the book
+            bookModel.findByIdAndUpdate(bookid, { $inc: { commentcount: 1 } }, (err, result) =>{
+              if(err){
+                res.status(500).send({error:"An error occured while trying to update the book"});
+              }else{
+                //json res format same as .get
+                res.redirect("/api/books/" + bookid);
+              }
+            });
+          }
+        });
     })
     
     .delete((req, res) => {
